@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 450" fill="none">
+  <defs>
+    <linearGradient id="theway-blue-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A8A" />
+      <stop offset="40%" stop-color="#1D4ED8" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="theway-cyan-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <filter id="theway-glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#1D4ED8" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Large Bold Letter W -->
+  <!-- Left Wing -->
+  <path d="M105 170 H170 L215 365 H160 Z" fill="url(#theway-blue-grad)" />
+  <!-- Center Middle V -->
+  <path d="M225 170 H285 L320 310 L275 365 Z" fill="url(#theway-blue-grad)" />
+  <!-- Right Wing -->
+  <path d="M275 170 H345 L415 365 H350 Z" fill="url(#theway-blue-grad)" />
+
+  <!-- The "THE" Circle Badge on the Left -->
+  <circle cx="75" cy="250" r="35" fill="url(#theway-blue-grad)" filter="url(#theway-glow)" />
+  <text x="75" y="258" font-family="'Cairo', 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">THE</text>
+
+  <!-- Dynamic Upward Arc / Swoosh Rocket Arrow -->
+  <!-- Arc Body -->
+  <path d="M25 260 C 50 330, 200 320, 440 60 L 460 80 C 230 350, 40 340, 25 260 Z" fill="url(#theway-blue-grad)" />
+  
+  <!-- Sleek Arrow Head -->
+  <polygon points="480,20 420,60 450,85" fill="url(#theway-blue-grad)" />
+  <polygon points="480,20 445,80 435,70" fill="#1E3A8A" />
+
+  <!-- Bottom Brand Text -->
+  <text x="250" y="405" font-family="'Segoe UI', 'Cairo', Arial, sans-serif" font-size="24" font-weight="800" fill="#1E3A8A" text-anchor="middle" letter-spacing="0.5">The Way Training Center</text>
+  <text x="250" y="430" font-family="'Segoe UI', 'Cairo', Arial, sans-serif" font-size="16" font-weight="700" fill="#475569" text-anchor="middle" letter-spacing="1.5">Your Way To Success</text>
+</svg>
