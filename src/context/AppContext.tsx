@@ -97,6 +97,7 @@ interface AppContextType {
   markAttendance: (sessionId: string, studentId: string, status: AttendanceStatus, notes?: string) => AttendanceRecord;
   recordAttendance: (sessionId: string, studentId: string, status: AttendanceStatus, notes?: string) => AttendanceRecord;
   markAllSessionAttendance: (sessionId: string, status: AttendanceStatus) => void;
+  processStudentCodeAttendance: (studentCodeOrId: string) => { success: boolean; message: string; student?: Student; session?: Session };
   processQRScan: (qrText: string) => { success: boolean; message: string; student?: Student; session?: Session };
 
   addPayment: (data: Omit<Payment, 'id' | 'receiptNumber' | 'collectedByUserId' | 'createdAt'>) => Payment;
@@ -153,7 +154,9 @@ interface AppContextType {
   activeReceiptPayment: Payment | null;
   setActiveReceiptPayment: (payment: Payment | null) => void;
 
-  // Student QR card state
+  // Student ID card state (replacing legacy QR)
+  activeIdCardStudent: Student | null;
+  setActiveIdCardStudent: (student: Student | null) => void;
   activeQRStudent: Student | null;
   setActiveQRStudent: (student: Student | null) => void;
 
@@ -200,6 +203,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
 
   const [activeReceiptPayment, setActiveReceiptPayment] = useState<Payment | null>(null);
+  const [activeIdCardStudent, setActiveIdCardStudent] = useState<Student | null>(null);
   const [activeQRStudent, setActiveQRStudent] = useState<Student | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
@@ -352,14 +356,73 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const canManageSettings = currentUser.role === UserRole.SUPER_ADMIN || currentUser.role === UserRole.ADMIN;
   const canRecordAttendance = true;
 
-  // View permission check: All authenticated staff can access the central workspace tabs
+  // Strict View permission check based on user role, custom permissions, and jurisdiction
   const canViewSection = (section: AppSection): boolean => {
-    return true;
+    const role = currentUser.role;
+    // Admins (SUPER_ADMIN and ADMIN) have full access to all panels
+    if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
+      return true;
+    }
+
+    // Check custom granular permissions if assigned by Admin
+    if (currentUser.customPermissions && Array.isArray(currentUser.customPermissions)) {
+      if (section === 'dashboard' || section === 'notifications') return true;
+      return currentUser.customPermissions.includes(section);
+    }
+
+    // Role-specific allowed panels according to official department jurisdiction
+    switch (role) {
+      case UserRole.RECEPTION:
+        // Reception handles front-desk, student registry, rooms, daily sessions, attendance, teachers
+        return ['dashboard', 'live', 'students', 'teachers', 'sessions', 'attendance', 'rooms', 'notifications'].includes(section);
+
+      case UserRole.SALES:
+        // Sales handles onboarding, student packages, contracts, subject catalog
+        return ['dashboard', 'students', 'contracts', 'subjects', 'notifications'].includes(section);
+
+      case UserRole.ACCOUNTANT:
+        // Accountant handles contracts, receipts, payments, teacher payroll, financial reports
+        return ['dashboard', 'contracts', 'payments', 'teacher_payments', 'reports', 'notifications'].includes(section);
+
+      case UserRole.TEACHER:
+        // Teacher handles classroom sessions, assignments, student attendance
+        return ['dashboard', 'live', 'attendance', 'assignments', 'sessions', 'notifications'].includes(section);
+
+      default:
+        return ['dashboard', 'notifications'].includes(section);
+    }
   };
 
-  // Edit permission check: All administrative and center staff have full operational capability
+  // Strict Edit permission check
   const canEditSection = (section: AppSection, entityOwnerId?: string): boolean => {
-    return true;
+    const role = currentUser.role;
+    if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
+      return true;
+    }
+
+    // Custom permissions can also grant edit rights
+    if (currentUser.customPermissions && Array.isArray(currentUser.customPermissions)) {
+      return currentUser.customPermissions.includes(section);
+    }
+
+    switch (role) {
+      case UserRole.RECEPTION:
+        return ['students', 'sessions', 'attendance', 'rooms'].includes(section);
+
+      case UserRole.SALES:
+        return ['students', 'contracts'].includes(section);
+
+      case UserRole.ACCOUNTANT:
+        return ['contracts', 'payments', 'teacher_payments'].includes(section);
+
+      case UserRole.TEACHER:
+        if (section === 'attendance') return true;
+        if (section === 'assignments') return true;
+        return false;
+
+      default:
+        return false;
+    }
   };
 
   const getSectionMeta = (section: AppSection) => {
@@ -626,18 +689,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return rec;
   };
 
-  const handleProcessQRScan = (qrText: string) => {
+  const handleProcessStudentCodeAttendance = (studentCodeOrId: string) => {
     if (!canEditSection('attendance')) {
-      addToast('error', 'مسح الـ QR مخصص لقسم الريسبشن والمدرسين', 'غير مصرح');
-      return { success: false, message: 'غير مصرح لك بمسح الحضور' };
+      addToast('error', 'تسجيل الحضور مخصص لقسم الريسبشن والمدرسين والإدارة', 'غير مصرح');
+      return { success: false, message: 'غير مصرح لك بتسجيل الحضور' };
     }
-    const res = storage.processQRScan(qrText, currentUser);
+    const res = storage.processStudentCodeAttendance(studentCodeOrId, currentUser);
     if (res.success) {
-      addToast('success', res.message, 'مسح QR ناجح');
+      addToast('success', res.message, 'تسجيل حضور بالكود');
     } else {
-      addToast('error', res.message, 'فشل مسح QR');
+      addToast('warning', res.message, 'تنبيه الحضور');
     }
     return res;
+  };
+
+  const handleProcessQRScan = (qrText: string) => {
+    return handleProcessStudentCodeAttendance(qrText);
   };
 
   const handleAddPayment = (
@@ -867,6 +934,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         markAttendance: handleMarkAttendance,
         recordAttendance: handleMarkAttendance,
         markAllSessionAttendance: handleMarkAllSessionAttendance,
+        processStudentCodeAttendance: handleProcessStudentCodeAttendance,
         processQRScan: handleProcessQRScan,
         addPayment: handleAddPayment,
         addTeacherPayment: handleAddTeacherPayment,
@@ -898,6 +966,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         removeToast,
         activeReceiptPayment,
         setActiveReceiptPayment,
+        activeIdCardStudent,
+        setActiveIdCardStudent,
         activeQRStudent,
         setActiveQRStudent,
         selectedStudentId,

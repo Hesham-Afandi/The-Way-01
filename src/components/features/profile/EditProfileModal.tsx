@@ -41,6 +41,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const user = targetUser || currentUser;
 
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,6 +55,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   useEffect(() => {
     if (user && isOpen) {
       setName(user.name || '');
+      setUsername(user.username || 'admin');
       setPhone(user.phone || '');
       setEmail(user.email || '');
       setPassword(user.password || '123');
@@ -86,7 +88,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = 'اسم الموظف مطلوب';
+    if (!name.trim()) errs.name = 'اسم المسؤول/الموظف مطلوب';
+    if (!username.trim()) errs.username = 'اسم المستخدم للدخول مطلوب';
     if (!phone.trim()) errs.phone = 'رقم الهاتف للتواصل مطلوب';
     if (!password.trim()) errs.password = 'كلمة المرور مطلوبة';
     setErrors(errs);
@@ -99,8 +102,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
     const updates: Partial<User> = {
       name: name.trim(),
+      username: username.trim(),
       phone: phone.trim(),
-      email: email.trim() || `${user.username || 'user'}@theway.com`,
+      email: email.trim() || `${username.trim()}@theway-center.ae`,
       password: password.trim(),
       avatar: avatar.trim() || undefined,
       notes: notes.trim()
@@ -116,7 +120,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       });
     }
 
-    addToast('success', `تم تحديث الملف الشخصي للموظف ${name.trim()} بنجاح وحفظ كافة التغييرات`, 'تعديل الملف الشخصي');
+    addToast('success', `تم تحديث بيانات الحساب (${username.trim()}) وكلمة المرور بنجاح`, 'تعديل الحساب');
     onClose();
   };
 
@@ -250,6 +254,21 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               {errors.name && <p className="text-[11px] text-rose-500 font-semibold">{errors.name}</p>}
             </div>
 
+            {/* Username */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                اسم المستخدم للدخول (Username): <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                placeholder="admin"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+              />
+              {errors.username && <p className="text-[11px] text-rose-500 font-semibold">{errors.username}</p>}
+            </div>
+
             {/* Phone */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -259,7 +278,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 type="tel"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                placeholder="01012345678"
+                placeholder="+971 50 123 4567"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
               />
               {errors.phone && <p className="text-[11px] text-rose-500 font-semibold">{errors.phone}</p>}

@@ -6,7 +6,6 @@ import {
   Clock,
   CheckCircle2,
   Calendar,
-  QrCode,
   Sparkles,
   ArrowRight,
   UserCheck,
@@ -17,11 +16,11 @@ import { Badge } from '../../common/Badge';
 import { formatTime12h } from '../../../utils/formatters';
 
 interface LiveCenterViewProps {
-  onOpenQRScanner: () => void;
+  onOpenQRScanner?: () => void;
   onOpenAddSession: () => void;
 }
 
-export const LiveCenterView: React.FC<LiveCenterViewProps> = ({ onOpenQRScanner, onOpenAddSession }) => {
+export const LiveCenterView: React.FC<LiveCenterViewProps> = ({ onOpenAddSession }) => {
   const {
     sessions,
     rooms,
@@ -72,13 +71,6 @@ export const LiveCenterView: React.FC<LiveCenterViewProps> = ({ onOpenQRScanner,
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
-            onClick={onOpenQRScanner}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-2xl shadow-xs transition-colors cursor-pointer"
-          >
-            <QrCode className="w-4 h-4" />
-            <span>مسح QR للحضور المباشر</span>
-          </button>
           <button
             onClick={onOpenAddSession}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-xs transition-colors cursor-pointer"

@@ -39,21 +39,21 @@ import {
 import { checkSessionConflicts } from '../utils/formatters';
 
 const STORAGE_KEYS = {
-  SETTINGS: 'theway_settings_v2',
-  USERS: 'theway_users_v2',
-  ACTIVE_USER: 'theway_active_user_v2',
-  SUBJECTS: 'theway_subjects_v2',
-  ROOMS: 'theway_rooms_v2',
-  TEACHERS: 'theway_teachers_v2',
-  STUDENTS: 'theway_students_v2',
-  ASSIGNMENTS: 'theway_assignments_v2',
-  CONTRACTS: 'theway_contracts_v2',
-  SESSIONS: 'theway_sessions_v2',
-  ATTENDANCE: 'theway_attendance_v2',
-  PAYMENTS: 'theway_payments_v2',
-  TEACHER_PAYMENTS: 'theway_teacher_payments_v2',
-  NOTIFICATIONS: 'theway_notifications_v2',
-  AUDIT_LOGS: 'theway_audit_logs_v2'
+  SETTINGS: 'theway_settings_v4',
+  USERS: 'theway_users_v4',
+  ACTIVE_USER: 'theway_active_user_v4',
+  SUBJECTS: 'theway_subjects_v4',
+  ROOMS: 'theway_rooms_v4',
+  TEACHERS: 'theway_teachers_v4',
+  STUDENTS: 'theway_students_v4',
+  ASSIGNMENTS: 'theway_assignments_v4',
+  CONTRACTS: 'theway_contracts_v4',
+  SESSIONS: 'theway_sessions_v4',
+  ATTENDANCE: 'theway_attendance_v4',
+  PAYMENTS: 'theway_payments_v4',
+  TEACHER_PAYMENTS: 'theway_teacher_payments_v4',
+  NOTIFICATIONS: 'theway_notifications_v4',
+  AUDIT_LOGS: 'theway_audit_logs_v4'
 };
 
 function getStored<T>(key: string, fallback: T): T {
@@ -97,22 +97,33 @@ export class StorageService {
   private constructor() {
     this.settings = getStored(STORAGE_KEYS.SETTINGS, initialSettings);
     const loadedUsers = getStored(STORAGE_KEYS.USERS, initialUsers);
-    // Ensure all users have username, department, and password fields
-    this.users = loadedUsers.map(u => {
-      const foundInitial = initialUsers.find(iu => iu.id === u.id || iu.email === u.email || iu.username === u.username);
-      return {
-        ...u,
-        username: u.username || foundInitial?.username || (u.email ? u.email.split('@')[0] : `user_${u.id.substring(4)}`),
-        department: u.department || foundInitial?.department || (u.role === UserRole.RECEPTION ? 'ريسبشن' : u.role === UserRole.TEACHER ? 'مدرسين' : u.role === UserRole.ACCOUNTANT ? 'حسابات' : u.role === UserRole.SALES ? 'سيلز' : 'إدارة'),
-        password: u.password || foundInitial?.password || '123'
+    
+    // Always ensure the initial admin from file is present and up-to-date with file edits if any
+    const fileAdmin = initialUsers[0];
+    let syncedUsers = Array.isArray(loadedUsers) && loadedUsers.length > 0 ? [...loadedUsers] : [...initialUsers];
+
+    const adminIndex = syncedUsers.findIndex(u => u.id === 'usr-admin' || u.role === UserRole.SUPER_ADMIN || u.id === 'usr-1');
+    if (adminIndex >= 0 && fileAdmin) {
+      // Sync username/password/name if updated directly in initialData.ts
+      syncedUsers[adminIndex] = {
+        ...syncedUsers[adminIndex],
+        id: 'usr-admin',
+        role: UserRole.SUPER_ADMIN,
+        username: fileAdmin.username || syncedUsers[adminIndex].username || 'admin',
+        password: fileAdmin.password || syncedUsers[adminIndex].password || '123',
+        name: fileAdmin.name || syncedUsers[adminIndex].name
       };
-    });
-    // Ensure all 5 initial specialty roles exist
-    initialUsers.forEach(iu => {
-      if (!this.users.some(u => u.username === iu.username || u.email === iu.email)) {
-        this.users.push(iu);
-      }
-    });
+    } else if (fileAdmin) {
+      syncedUsers.unshift(fileAdmin);
+    }
+
+    this.users = syncedUsers.map(u => ({
+      ...u,
+      username: u.username || 'admin',
+      department: u.department || 'إدارة',
+      password: u.password || '123'
+    }));
+
     setStored(STORAGE_KEYS.USERS, this.users);
     this.subjects = getStored(STORAGE_KEYS.SUBJECTS, initialSubjects);
     this.rooms = getStored(STORAGE_KEYS.ROOMS, initialRooms);
@@ -251,8 +262,14 @@ export class StorageService {
     return this.students.find(s => s.id === id);
   }
 
-  public addStudent(data: Omit<Student, 'id' | 'code' | 'qrCode' | 'registrationDate'>, currentUser: User): Student {
-    const nextNum = this.students.length + 1001;
+  public addStudent(data: Omit<Student, 'id' | 'code' | 'registrationDate'>, currentUser: User): Student {
+    const existingNums = this.students
+      .map(s => {
+        const match = s.code?.match(/STD-(\d+)/i);
+        return match ? parseInt(match[1], 10) : 0;
+      })
+      .filter(n => !isNaN(n) && n > 0);
+    const nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1001;
     const code = `STD-${nextNum}`;
     const id = `std-${Date.now()}`;
     const todayStr = new Date().toISOString().split('T')[0];
@@ -260,8 +277,7 @@ export class StorageService {
       ...data,
       id,
       code,
-      registrationDate: todayStr,
-      qrCode: `EDUCENTER:${code}:${data.name.replace(/\s+/g, '_')}`
+      registrationDate: todayStr
     };
 
     this.students = [newStudent, ...this.students];
@@ -270,7 +286,7 @@ export class StorageService {
     this.addNotification({
       type: 'system',
       title: `تسجيل طالب جديد: ${newStudent.name}`,
-      message: `قام ${currentUser.name} بتسجيل الطالب ${newStudent.name} (${newStudent.code}) في صف ${newStudent.grade}`,
+      message: `قام ${currentUser.name} بتسجيل الطالب ${newStudent.name} (كود: ${newStudent.code}) في صف ${newStudent.grade}`,
       date: todayStr,
       isRead: false,
       relatedEntityId: newStudent.id,
@@ -285,7 +301,7 @@ export class StorageService {
       'Student',
       newStudent.id,
       newStudent.name,
-      `تم إضافة طالب جديد: ${newStudent.name} (${newStudent.code}) - ${newStudent.grade}`
+      `تم تسجيل طالب جديد: ${newStudent.name} (كود: ${newStudent.code}) - ${newStudent.grade}`
     );
     this.notify();
     return newStudent;
@@ -409,7 +425,19 @@ export class StorageService {
 
   public addSubject(data: Omit<Subject, 'id'>, currentUser: User): Subject {
     const id = `sbj-${Date.now()}`;
-    const newSubject: Subject = { ...data, id };
+    let code = (data.code || '').trim().toUpperCase();
+    if (!code) {
+      const existingNums = this.subjects
+        .map(s => {
+          const match = s.code?.match(/SUB-(\d+)/i);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter(n => !isNaN(n) && n > 0);
+      const nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : this.subjects.length + 1;
+      code = `SUB-${nextNum.toString().padStart(2, '0')}`;
+    }
+
+    const newSubject: Subject = { ...data, id, code };
     this.subjects = [...this.subjects, newSubject];
     setStored(STORAGE_KEYS.SUBJECTS, this.subjects);
     this.logAudit(
@@ -419,7 +447,7 @@ export class StorageService {
       'Subject',
       newSubject.id,
       newSubject.name,
-      `تم إضافة مادة دراسية جديدة: ${newSubject.name} (${newSubject.code})`
+      `تم إضافة مادة دراسية جديدة: ${newSubject.name} (كود: ${newSubject.code})`
     );
     this.notify();
     return newSubject;
@@ -895,9 +923,9 @@ export class StorageService {
     return record;
   }
 
-  // --- QR Attendance Engine ---
-  public processQRScan(
-    qrCodeText: string,
+  // --- Quick Student Code Attendance Engine ---
+  public processStudentCodeAttendance(
+    studentCodeOrId: string,
     currentUser: User
   ): {
     success: boolean;
@@ -906,20 +934,18 @@ export class StorageService {
     session?: Session;
     attendance?: AttendanceRecord;
   } {
-    // Expected QR format: EDUCENTER:STD-1001:NAME or plain STD-1001 or student id
-    const cleanText = qrCodeText.trim();
+    const cleanText = studentCodeOrId.trim().toUpperCase();
     let student = this.students.find(
       s =>
-        s.qrCode === cleanText ||
-        s.code === cleanText ||
-        s.id === cleanText ||
-        cleanText.includes(s.code)
+        s.code?.toUpperCase() === cleanText ||
+        s.id === studentCodeOrId.trim() ||
+        s.name.toLowerCase().includes(studentCodeOrId.trim().toLowerCase())
     );
 
     if (!student) {
       return {
         success: false,
-        message: 'كود الطالب غير صحيح أو غير مسجل بالنظام!'
+        message: 'كود الطالب غير صحيح أو لا يوجد طالب بهذا الكود في النظام!'
       };
     }
 
@@ -932,7 +958,7 @@ export class StorageService {
     if (studentTodaySessions.length === 0) {
       return {
         success: false,
-        message: `الطالب ${student.name} ليس لديه أي حصص مجدولة اليوم (${todayStr}).`,
+        message: `الطالب ${student.name} (${student.code}) ليس لديه أي حصص مجدولة لليوم (${todayStr}).`,
         student
       };
     }
@@ -946,17 +972,22 @@ export class StorageService {
       targetSession.id,
       student.id,
       AttendanceStatus.PRESENT,
-      'تم تسجيل الحضور بمسح كود الـ QR عبر الاستقبال',
+      `تم تسجيل الحضور عبر إدخال كود الطالب (${student.code})`,
       currentUser
     );
 
     return {
       success: true,
-      message: `تم تسجيل حضور الطالب ${student.name} بنجاح في حصة: ${targetSession.title}`,
+      message: `تم تسجيل حضور الطالب ${student.name} (${student.code}) بنجاح في حصة: ${targetSession.title}`,
       student,
       session: targetSession,
       attendance
     };
+  }
+
+  // Deprecated compatibility alias
+  public processQRScan(code: string, currentUser: User) {
+    return this.processStudentCodeAttendance(code, currentUser);
   }
 
   // --- Payments ---

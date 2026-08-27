@@ -15,7 +15,8 @@ import {
   Calendar,
   Layers,
   LayoutGrid,
-  Table as TableIcon
+  Table as TableIcon,
+  FileText
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { Badge } from '../../common/Badge';
@@ -24,12 +25,14 @@ import { ViewOnlyBanner } from '../../common/ViewOnlyBanner';
 import { Student, StudentStatus } from '../../../types';
 
 interface StudentsViewProps {
-  onOpenAddStudent: () => void;
+  onOpenAddStudent?: () => void;
+  onOpenAddContract?: () => void;
   onOpenEditStudent: (student: Student) => void;
 }
 
 export const StudentsView: React.FC<StudentsViewProps> = ({
   onOpenAddStudent,
+  onOpenAddContract,
   onOpenEditStudent
 }) => {
   const {
@@ -132,11 +135,11 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
           {isEditable && (
             <button
-              onClick={onOpenAddStudent}
-              className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-2xl shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+              onClick={onOpenAddContract || onOpenAddStudent}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-700 hover:to-amber-600 text-white text-xs font-black rounded-2xl shadow-lg shadow-amber-600/30 transition-all cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              <span>تسجيل طالب جديد</span>
+              <FileText className="w-4 h-4" />
+              <span>عقد اشتراك جديد</span>
             </button>
           )}
         </div>

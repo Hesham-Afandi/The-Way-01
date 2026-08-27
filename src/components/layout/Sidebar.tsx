@@ -26,6 +26,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import { AppSection } from '../../types';
 import { TheWayLogo } from '../common/TheWayLogo';
+import { InstallAppButton } from '../common/InstallAppPrompt';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -253,6 +254,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               );
             })}
         </nav>
+
+        {/* Install App Sidebar Action */}
+        <div className="p-3 border-t border-slate-800/80 bg-[#0C1222]">
+          <InstallAppButton variant="sidebar" />
+        </div>
 
         {/* Footer Summary / Quick Info & Logout */}
         <div className="p-3.5 border-t border-slate-800/80 bg-[#0B1120] text-[11px] text-slate-400 flex items-center justify-between">

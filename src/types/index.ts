@@ -86,6 +86,8 @@ export interface Student {
   id: string;
   code: string; // كود الطالب مثل STD-1001
   name: string;
+  username?: string; // يوزر / اسم مستخدم الطالب
+  salesRep?: string; // السيلز / مسؤول المبيعات والتسجيل
   gender: 'male' | 'female';
   birthDate?: string;
   grade: string; // الصف الدراسي (KG1 إلى Grade 12)
@@ -160,6 +162,8 @@ export interface Contract {
   id: string;
   contractNumber: string; // CNT-2025-001
   studentId: string;
+  studentUsername?: string;
+  salesRep?: string; // السيلز مسؤول التسجيل
   subjectIds: string[];
   teacherId?: string;
   startDate: string;
@@ -312,6 +316,7 @@ export interface User {
   isActive: boolean;
   avatar?: string;
   password?: string;
+  customPermissions?: AppSection[]; // الصلاحيات المخصصة للموظف (إضافة / حذف صلاحيات)
 }
 
 export interface CenterSettings {

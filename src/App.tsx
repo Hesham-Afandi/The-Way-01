@@ -13,11 +13,10 @@ import { LoginView } from './components/auth/LoginView';
 
 // Modals
 import { ReceiptModal } from './components/common/ReceiptModal';
-import { QRCardModal } from './components/common/QRCardModal';
+import { StudentIdCardModal } from './components/common/StudentIdCardModal';
 import { StudentFormModal } from './components/features/students/StudentFormModal';
 import { TeacherFormModal } from './components/features/teachers/TeacherFormModal';
 import { SessionFormModal } from './components/features/sessions/SessionFormModal';
-import { QRScannerModal } from './components/features/attendance/QRScannerModal';
 import { ContractFormModal } from './components/features/contracts/ContractFormModal';
 import { PaymentFormModal } from './components/features/payments/PaymentFormModal';
 import { EditProfileModal } from './components/features/profile/EditProfileModal';
@@ -57,8 +56,8 @@ const MainContent: React.FC = () => {
     teachers,
     activeReceiptPayment,
     setActiveReceiptPayment,
-    activeQRStudent,
-    setActiveQRStudent,
+    activeIdCardStudent,
+    setActiveIdCardStudent,
     canViewSection
   } = useApp();
 
@@ -74,8 +73,6 @@ const MainContent: React.FC = () => {
 
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
   const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
-
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   const [isAddContractOpen, setIsAddContractOpen] = useState(false);
   const [contractToEdit, setContractToEdit] = useState<Contract | null>(null);
@@ -175,8 +172,8 @@ const MainContent: React.FC = () => {
         {/* Top Header */}
         <Header
           onOpenSearch={() => setIsGlobalSearchOpen(true)}
-          onOpenQRScanner={() => setIsQRScannerOpen(true)}
           onOpenAddSession={handleOpenAddSession}
+          onOpenAddContract={() => handleOpenAddContract()}
           onOpenAddStudent={handleOpenAddStudent}
           onOpenEditProfile={() => handleOpenEditProfile()}
           onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
@@ -207,22 +204,22 @@ const MainContent: React.FC = () => {
             <>
               {activeTab === 'dashboard' && (
                 <DashboardView
+                  onOpenAddContract={() => handleOpenAddContract()}
                   onOpenAddStudent={handleOpenAddStudent}
                   onOpenAddSession={handleOpenAddSession}
                   onOpenAddPayment={() => handleOpenAddPayment()}
-                  onOpenQRScanner={() => setIsQRScannerOpen(true)}
                 />
               )}
 
               {activeTab === 'live' && (
                 <LiveCenterView
-                  onOpenQRScanner={() => setIsQRScannerOpen(true)}
                   onOpenAddSession={handleOpenAddSession}
                 />
               )}
 
               {activeTab === 'students' && canViewSection('students') && (
                 <StudentsView
+                  onOpenAddContract={() => handleOpenAddContract()}
                   onOpenAddStudent={handleOpenAddStudent}
                   onOpenEditStudent={handleOpenEditStudent}
                 />
@@ -243,7 +240,7 @@ const MainContent: React.FC = () => {
               )}
 
               {activeTab === 'attendance' && canViewSection('attendance') && (
-                <AttendanceView onOpenQRScanner={() => setIsQRScannerOpen(true)} />
+                <AttendanceView />
               )}
 
               {activeTab === 'assignments' && canViewSection('assignments') && <AssignmentsView />}
@@ -292,10 +289,10 @@ const MainContent: React.FC = () => {
         payment={activeReceiptPayment}
       />
 
-      <QRCardModal
-        isOpen={!!activeQRStudent}
-        onClose={() => setActiveQRStudent(null)}
-        student={activeQRStudent}
+      <StudentIdCardModal
+        isOpen={!!activeIdCardStudent}
+        onClose={() => setActiveIdCardStudent(null)}
+        student={activeIdCardStudent}
       />
 
       <StudentFormModal
@@ -314,11 +311,6 @@ const MainContent: React.FC = () => {
         isOpen={isAddSessionOpen}
         onClose={() => setIsAddSessionOpen(false)}
         sessionToEdit={sessionToEdit}
-      />
-
-      <QRScannerModal
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
       />
 
       <ContractFormModal

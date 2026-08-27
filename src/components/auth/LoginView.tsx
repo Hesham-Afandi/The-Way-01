@@ -10,19 +10,33 @@ import {
   FileText,
   CreditCard,
   GraduationCap,
-  KeyRound
+  KeyRound,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Zap,
+  CheckCircle2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { User } from '../../types';
 import { TheWayLogo } from '../common/TheWayLogo';
+import { InstallAppButton } from '../common/InstallAppPrompt';
 
 export const LoginView: React.FC = () => {
   const { users, login, settings } = useApp();
 
-  const [identifier, setIdentifier] = useState('');
+  const [identifier, setIdentifier] = useState('admin');
   const [password, setPassword] = useState('123');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Clear default 3 dots ('123') immediately on focus, click, or touch
+  const handlePasswordClearOnInteraction = () => {
+    if (password === '123' || password === '•••') {
+      setPassword('');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,9 +52,9 @@ export const LoginView: React.FC = () => {
       const success = login(identifier.trim(), password);
       setIsLoading(false);
       if (!success) {
-        setError('بيانات الدخول غير صحيحة أو الحساب غير مفعّل. تأكد من اسم المستخدم وكلمة المرور.');
+        setError('بيانات الدخول غير صحيحة. تأكد من اسم المستخدم وكلمة المرور.');
       }
-    }, 300);
+    }, 250);
   };
 
   const handleQuickLogin = (user: User) => {
@@ -50,81 +64,70 @@ export const LoginView: React.FC = () => {
     login(loginKey, user.password || '123');
   };
 
-  const departmentIcons: Record<string, React.ElementType> = {
-    إدارة: ShieldCheck,
-    ريسبشن: UserCheck,
-    سيلز: FileText,
-    مدرسين: GraduationCap,
-    حسابات: CreditCard
-  };
-
-  const departmentColors: Record<string, { bg: string; text: string; border: string; badge: string }> = {
-    إدارة: {
-      bg: 'bg-rose-50 hover:bg-rose-100/80',
-      text: 'text-rose-900',
-      border: 'border-rose-200',
-      badge: 'bg-rose-100 text-rose-800'
-    },
-    ريسبشن: {
-      bg: 'bg-emerald-50 hover:bg-emerald-100/80',
-      text: 'text-emerald-900',
-      border: 'border-emerald-200',
-      badge: 'bg-emerald-100 text-emerald-800'
-    },
-    سيلز: {
-      bg: 'bg-amber-50 hover:bg-amber-100/80',
-      text: 'text-amber-900',
-      border: 'border-amber-200',
-      badge: 'bg-amber-100 text-amber-800'
-    },
-    مدرسين: {
-      bg: 'bg-blue-50 hover:bg-blue-100/80',
-      text: 'text-blue-900',
-      border: 'border-blue-200',
-      badge: 'bg-blue-100 text-blue-800'
-    },
-    حسابات: {
-      bg: 'bg-cyan-50 hover:bg-cyan-100/80',
-      text: 'text-cyan-900',
-      border: 'border-cyan-200',
-      badge: 'bg-cyan-100 text-cyan-800'
-    }
-  };
-
   return (
     <div
-      className="min-h-screen w-full bg-[#090D16] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 font-sans antialiased text-slate-100 relative overflow-hidden"
+      className="min-h-screen w-full bg-[#080C16] flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 font-sans antialiased text-slate-100 relative overflow-hidden"
       dir="rtl"
     >
-      {/* Background Subtle Gradient Glows */}
-      <div className="absolute -top-32 right-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 left-1/4 w-[500px] h-[500px] bg-sky-600/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Dynamic Animated Ambient Background Glows */}
+      <div className="absolute -top-40 right-1/4 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[140px] animate-pulse pointer-events-none" />
+      <div className="absolute -bottom-40 left-1/4 w-[600px] h-[600px] bg-sky-500/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-900/15 rounded-full blur-[160px] pointer-events-none" />
 
-      <div className="w-full max-w-5xl z-10 space-y-8 my-auto">
-        {/* Brand Header */}
-        <div className="flex flex-col items-center text-center space-y-2">
-          <TheWayLogo variant="white" size="xl" />
-          <p className="text-xs sm:text-sm text-slate-400 max-w-md pt-1 font-medium">
-            نظام إدارة وتدريب شامل للمركز التعليمي، الطلاب، المدرسين، وسندات الدفع
+      {/* Top Bar with PWA install & Status */}
+      <header className="w-full max-w-5xl z-20 flex items-center justify-between py-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+          <span className="text-xs font-bold text-slate-300">الخادم متصل وجاهز</span>
+        </div>
+        <InstallAppButton variant="header" />
+      </header>
+
+      {/* Main Content Area */}
+      <main className="w-full max-w-5xl z-10 space-y-7 my-auto py-6">
+        {/* Dynamic Brand Header & High-Vibrancy Logo Experience */}
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="relative inline-flex flex-col items-center justify-center p-5 sm:p-7 rounded-3xl bg-[#0F172A]/80 backdrop-blur-xl border border-blue-500/30 shadow-2xl shadow-blue-950/60 group transition-all duration-300 hover:border-blue-400/60 hover:shadow-blue-600/20">
+            {/* Dynamic Glow Halo */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/40 via-sky-400/30 to-indigo-600/40 rounded-3xl blur-xl opacity-70 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col items-center">
+              <TheWayLogo variant="white" size="2xl" animated={true} />
+            </div>
+
+            {/* Dynamic System Badge */}
+            <div className="mt-3.5 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-950/90 border border-blue-600/50 text-xs font-bold text-sky-200 shadow-inner">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>The Way Training Center • بوابة الإدارة والتحكم الأكاديمي</span>
+            </div>
+          </div>
+
+          <p className="text-xs sm:text-sm text-slate-300 max-w-lg font-medium leading-relaxed">
+            المنظومة السحابية الموحدة لإدارة شؤون الطلاب، المدرسين، الحصص، الحضور بالباركود، وسندات القبض
           </p>
         </div>
 
-        {/* Main Grid: Form on Right / Quick Roles on Left */}
+        {/* Main Grid: Form on Right / Quick Admin on Left */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Login Form Box (5 cols) */}
-          <div className="lg:col-span-5 bg-[#0F172A]/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-            <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Lock className="w-4 h-4 text-blue-400" />
-                <span>تسجيل الدخول للنظام</span>
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                سجّل الدخول بحساب موظف للوصول إلى لوحة الاختصاصات
-              </p>
+          {/* Login Form Box */}
+          <div className="lg:col-span-6 lg:col-start-4 bg-[#0F172A]/90 backdrop-blur-2xl border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-black text-white flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-blue-400" />
+                  <span>تسجيل الدخول للنظام</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  أدخل بيانات الحساب للمتابعة إلى لوحة التحكم
+                </p>
+              </div>
+              <span className="px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[11px] font-bold font-mono">
+                Admin Ready
+              </span>
             </div>
 
             {error && (
-              <div className="p-3.5 rounded-2xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs flex items-center gap-2.5">
+              <div className="p-3.5 rounded-2xl bg-rose-950/70 border border-rose-800 text-rose-200 text-xs flex items-center gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
                 <span>{error}</span>
               </div>
@@ -132,43 +135,64 @@ export const LoginView: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+                <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-blue-400" />
                   <span>اسم المستخدم (Username) أو البريد:</span>
                 </label>
                 <input
                   type="text"
                   value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
-                  placeholder="admin / reception / sales / teacher / accountant"
-                  className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-left font-mono"
+                  placeholder="admin"
+                  className="w-full px-4 py-3 rounded-2xl bg-[#090D16] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-left font-mono"
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-blue-400" />
                   <span>كلمة المرور (Password):</span>
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-left font-mono"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    onFocus={handlePasswordClearOnInteraction}
+                    onClick={handlePasswordClearOnInteraction}
+                    onMouseDown={handlePasswordClearOnInteraction}
+                    onTouchStart={handlePasswordClearOnInteraction}
+                    placeholder="أدخل كلمة المرور..."
+                    className="w-full pl-11 pr-4 py-3 rounded-2xl bg-[#090D16] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-left font-mono"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer p-1"
+                    title={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-                  <span>كلمة المرور الافتراضية للجميع:</span>
-                  <span className="font-mono text-blue-400 font-bold bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700">123</span>
+                  <span className="text-slate-400">تختفي النقاط الثلاث تلقائياً فور النقر:</span>
+                  <button
+                    type="button"
+                    onClick={() => setPassword('123')}
+                    className="font-mono text-blue-400 hover:text-blue-300 font-bold bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-700 transition-colors cursor-pointer"
+                    title="انقر لإعادة كتابة 123"
+                  >
+                    123
+                  </button>
                 </div>
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 active:from-blue-700 text-white font-black text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 active:from-blue-800 text-white font-black text-sm shadow-xl shadow-blue-600/30 hover:shadow-blue-600/50 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isLoading ? (
                   <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -181,107 +205,52 @@ export const LoginView: React.FC = () => {
               </button>
             </form>
 
-            <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1 text-center">
-              <p className="font-semibold text-slate-300">إدارة المستخدمين والصلاحيات:</p>
-              <p className="text-slate-500">
-                تسجيل الدخول بحساب الأدمن (ولاء حمدان) يتيح تعديل وتوليد موظفين جدد وكلمات المرور الخاصة بهم.
-              </p>
-            </div>
-          </div>
-
-          {/* Quick 1-Click Role Accounts Selector (7 cols) */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-blue-400" />
-                  <span>دخول تجريبي سريع بحسابات الأقسام المعتمدة:</span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  انقر على أي بطاقة لتسجيل الدخول الفوري بحساب الموظف:
+            {/* Quick 1-Click Admin Access Card */}
+            {users.length > 0 && (
+              <div className="pt-4 border-t border-slate-800 space-y-3">
+                <p className="text-[11px] font-bold text-slate-300">
+                  الحساب الرئيسي المعتمد (المدير العام):
                 </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3">
-              {users.map(user => {
-                const Icon = departmentIcons[user.department] || Users;
-                const colors = departmentColors[user.department] || departmentColors['إدارة'];
-
-                return (
-                  <div
-                    key={user.id}
-                    onClick={() => handleQuickLogin(user)}
-                    className="p-4 rounded-3xl bg-[#0F172A]/70 hover:bg-[#1E293B]/90 border border-slate-800 hover:border-blue-500/50 transition-all duration-200 cursor-pointer group text-right flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md"
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-11 h-11 rounded-2xl bg-slate-800 text-blue-400 border border-slate-700/80 flex items-center justify-center font-bold text-sm shrink-0 group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-md">
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-bold text-sm text-white group-hover:text-blue-300 transition-colors">
-                            {user.name}
-                          </h4>
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${colors.badge} ${colors.border}`}
-                          >
-                            قسم: {user.department}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-300 font-medium leading-relaxed">
-                          {user.departmentDescription || 'عضو في طاقم عمل The Way Center'}
-                        </p>
-                        <div className="flex items-center gap-3 text-[11px] font-mono text-slate-400 pt-0.5">
-                          <span className="text-blue-300 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
-                            يوزر: {user.username || user.email.split('@')[0]}
-                          </span>
-                          <span className="text-slate-300 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
-                            باسورد: {user.password || '123'}
-                          </span>
-                        </div>
-                      </div>
+                <div
+                  onClick={() => handleQuickLogin(users[0])}
+                  className="p-3.5 rounded-2xl bg-slate-900/90 hover:bg-blue-950/40 border border-slate-700/80 hover:border-blue-500/60 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-md group-hover:scale-105 transition-transform">
+                      <ShieldCheck className="w-5 h-5" />
                     </div>
-
-                    <button
-                      type="button"
-                      className="px-3.5 py-2 rounded-xl bg-slate-800 group-hover:bg-blue-600 text-slate-300 group-hover:text-white text-xs font-bold transition-all shrink-0 flex items-center gap-1 self-end sm:self-center shadow-xs"
-                    >
-                      <span>دخول كـ {user.department}</span>
-                      <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-                    </button>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-white group-hover:text-blue-300 transition-colors">
+                          {users[0].name}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 text-[10px] font-extrabold border border-rose-500/30">
+                          المدير العام (Admin)
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                        يوزر: <span className="text-blue-300">{users[0].username}</span> • باسورد: <span className="text-slate-300">{users[0].password}</span>
+                      </p>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
 
-            {/* Department Rules Legend */}
-            <div className="p-4 rounded-3xl bg-[#0F172A]/50 border border-slate-800 text-xs text-slate-400 space-y-2.5">
-              <h5 className="font-bold text-slate-200 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>صلاحيات واختصاصات أقسام The Way Center:</span>
-              </h5>
-              <ul className="list-disc list-inside space-y-1.5 text-[11px] text-slate-300 leading-relaxed pr-1">
-                <li>
-                  <strong className="text-white">الأدمن (ولاء حمدان):</strong> الصلاحيات الكاملة للتحكم في كافة الأقسام، التقارير، إضافة مستخدمين وباسوردات جديدة وإعدادات المركز.
-                </li>
-                <li>
-                  <strong className="text-blue-400">المعلم (أ. محمد هشام):</strong> إدارة حصص الرياضيات والفيزياء، تسجيل الحضور لطلابه والملاحظات والواجبات.
-                </li>
-                <li>
-                  <strong className="text-emerald-400">الريسبشن (منى إبراهيم):</strong> شؤون الطلاب، مسح QR الحضور والغياب، جدولة الحصص، ومتابعة القاعات.
-                </li>
-                <li>
-                  <strong className="text-amber-400">السيلز (أحمد طارق):</strong> العقود والاشتراكات، تسجيل الطلاب بالباقات، وسندات القبض.
-                </li>
-                <li>
-                  <strong className="text-cyan-400">الحسابات (سامح محمود):</strong> تحصيل الرسوم، سندات القبض، صرف مستحقات المدرس، والتقارير المالية.
-                </li>
-              </ul>
-            </div>
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-xl bg-blue-600/80 group-hover:bg-blue-600 text-white text-xs font-bold transition-all"
+                  >
+                    دخول سريع
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="w-full max-w-5xl z-10 text-center py-3 text-xs text-slate-500">
+        <p>The Way Training Center © 2026 • جميع الحقوق محفوظة</p>
+      </footer>
     </div>
   );
 };

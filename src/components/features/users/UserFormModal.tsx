@@ -15,16 +15,59 @@ import {
   DollarSign,
   CreditCard,
   Calendar,
-  FileText
+  FileText,
+  Sliders,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
-import { User, UserRole } from '../../../types';
+import { User, UserRole, AppSection } from '../../../types';
 
 interface UserFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   userToEdit?: User | null;
 }
+
+const ALL_SYSTEM_SECTIONS: { id: AppSection; label: string; description: string; category: string }[] = [
+  { id: 'dashboard', label: 'لوحة التحكم والمؤشرات', description: 'عرض الإحصائيات العامة ومؤشرات الأداء اليومية', category: 'الرئيسية' },
+  { id: 'live', label: 'شاشة السنتر المباشرة', description: 'متابعة القاعات والحصص الجارية الآن والاشغال', category: 'العمليات' },
+  { id: 'students', label: 'شؤون الطلاب', description: 'تسجيل وتعديل وأرشفة بيانات الطلاب وأولياء الأمور', category: 'الطلاب' },
+  { id: 'contracts', label: 'العقود وباقات الحصص', description: 'إنشاء وتجديد العقود واشتراكات الطلاب', category: 'الطلاب' },
+  { id: 'sessions', label: 'الحصص والجداول', description: 'جدولة الحصص الدراسية والمواعيد الأسبوعية', category: 'الأكاديميا' },
+  { id: 'attendance', label: 'تسجيل الحضور والـ QR', description: 'تحضير الطلاب ومسح بطاقات الباركود الذكية', category: 'الأكاديميا' },
+  { id: 'teachers', label: 'طاقم المدرسين', description: 'إدارة ملفات المدرسين وبيانات التواصل', category: 'الأكاديميا' },
+  { id: 'assignments', label: 'تعيينات المدرسين والطلاب', description: 'ربط المدرسين بالطلاب والمواد الدراسية', category: 'الأكاديميا' },
+  { id: 'rooms', label: 'القاعات والمعامل', description: 'إدارة وتعديل أسماء القاعات وسعتها التجهيزية', category: 'المركز' },
+  { id: 'subjects', label: 'المواد الدراسية', description: 'إضافة وتعديل المواد والمناهج التعليمية', category: 'المركز' },
+  { id: 'payments', label: 'سندات القبض والتحصيل', description: 'إصدار وتوثيق المدفوعات النقدية والبنكية', category: 'المالية' },
+  { id: 'teacher_payments', label: 'مستحقات ورواتب المدرسين', description: 'حساب أجر الحصص وإصدار مستحقات المدرسين', category: 'المالية' },
+  { id: 'reports', label: 'التقارير والإحصائيات', description: 'التقارير المالية والأكاديمية المفصلة', category: 'المالية' },
+  { id: 'notifications', label: 'التنبيهات والإشعارات', description: 'إشعارات العقود المنتهية والغياب', category: 'النظام' },
+  { id: 'audit', label: 'سجل التعديلات والعمليات', description: 'تتبع كافة التغييرات التي يجريها الموظفون', category: 'الإدارة' },
+  { id: 'users', label: 'الموظفين وصلاحيات المستخدمين', description: 'إضافة موظفين وتخصيص صلاحيات الدخول', category: 'الإدارة' },
+  { id: 'settings', label: 'إعدادات المركز والسياسات', description: 'تعديل بيانات السنتر، الأسعار والسياسات العامة', category: 'الإدارة' }
+];
+
+const DEFAULT_DEPT_PERMISSIONS: Record<'إدارة' | 'ريسبشن' | 'سيلز' | 'مدرسين' | 'حسابات', AppSection[]> = {
+  إدارة: [
+    'dashboard', 'live', 'students', 'teachers', 'sessions', 'attendance', 'assignments',
+    'contracts', 'payments', 'teacher_payments', 'rooms', 'subjects', 'reports',
+    'notifications', 'audit', 'users', 'settings'
+  ],
+  ريسبشن: [
+    'dashboard', 'live', 'students', 'teachers', 'sessions', 'attendance', 'rooms', 'notifications'
+  ],
+  سيلز: [
+    'dashboard', 'students', 'contracts', 'subjects', 'payments', 'notifications'
+  ],
+  مدرسين: [
+    'dashboard', 'live', 'attendance', 'assignments', 'sessions', 'notifications'
+  ],
+  حسابات: [
+    'dashboard', 'contracts', 'payments', 'teacher_payments', 'reports', 'notifications'
+  ]
+};
 
 export const UserFormModal: React.FC<UserFormModalProps> = ({
   isOpen,
@@ -47,6 +90,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const [department, setDepartment] = useState<'إدارة' | 'ريسبشن' | 'سيلز' | 'مدرسين' | 'حسابات'>('ريسبشن');
   const [teacherId, setTeacherId] = useState<string>('');
   const [isActive, setIsActive] = useState(true);
+  const [customPermissions, setCustomPermissions] = useState<AppSection[]>(DEFAULT_DEPT_PERMISSIONS['ريسبشن']);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -64,6 +108,11 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setDepartment(userToEdit.department);
       setTeacherId(userToEdit.teacherId || '');
       setIsActive(userToEdit.isActive);
+      setCustomPermissions(
+        userToEdit.customPermissions && userToEdit.customPermissions.length > 0
+          ? userToEdit.customPermissions
+          : DEFAULT_DEPT_PERMISSIONS[userToEdit.department] || DEFAULT_DEPT_PERMISSIONS['ريسبشن']
+      );
     } else {
       setName('');
       setUsername('');
@@ -78,6 +127,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setDepartment('ريسبشن');
       setTeacherId('');
       setIsActive(true);
+      setCustomPermissions(DEFAULT_DEPT_PERMISSIONS['ريسبشن']);
     }
     setErrors({});
   }, [userToEdit, isOpen]);
@@ -86,43 +136,65 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 
   const departmentMeta: Record<
     'إدارة' | 'ريسبشن' | 'سيلز' | 'مدرسين' | 'حسابات',
-    { role: UserRole; title: string; desc: string; boards: string[]; color: string }
+    { role: UserRole; title: string; desc: string; color: string }
   > = {
     إدارة: {
       role: UserRole.ADMIN,
       title: 'إدارة السنتر والمدير العام',
       desc: 'صلاحيات كاملة للاطلاع والتعديل والإضافة والحذف في كافة الأقسام والإعدادات والمستخدمين',
-      boards: ['كافة الأقسام واللوحات بدون استثناء'],
-      color: 'border-rose-500 bg-rose-50/70 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200'
+      color: 'border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-300'
     },
     ريسبشن: {
       role: UserRole.RECEPTION,
       title: 'الريسبشن والاستقبال',
       desc: 'تسجيل الطلاب، الحصص والجداول، مسح باركود الـ QR، تسجيل الحضور، وتنظيم القاعات',
-      boards: ['السنتر الآن', 'الطلاب', 'الحصص والجداول', 'تسجيل الحضور', 'القاعات والمعامل'],
-      color: 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200'
+      color: 'border-emerald-500 bg-emerald-500/10 text-emerald-900 dark:text-emerald-300'
     },
     سيلز: {
       role: UserRole.SALES,
       title: 'المبيعات والاشتراكات (Sales)',
       desc: 'إدارة باقات الحصص والعقود والاشتراكات، تسجيل الطلاب الجدد، وإصدار سندات القبض',
-      boards: ['السنتر الآن', 'الطلاب', 'العقود والاشتراكات', 'المدفوعات وسندات القبض'],
-      color: 'border-amber-500 bg-amber-50/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200'
+      color: 'border-blue-500 bg-blue-500/10 text-blue-900 dark:text-blue-300'
     },
     مدرسين: {
       role: UserRole.TEACHER,
       title: 'طاقم التدريس',
       desc: 'الاطلاع على جدول الحصص الخاص بالمدرس، تسجيل حضور وغياب طلاب مجموعته',
-      boards: ['السنتر الآن', 'الحصص والجداول (حصص المدرس)', 'تسجيل الحضور'],
-      color: 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200'
+      color: 'border-purple-500 bg-purple-500/10 text-purple-900 dark:text-purple-300'
     },
     حسابات: {
       role: UserRole.ACCOUNTANT,
       title: 'المحاسبة والمالية',
       desc: 'سندات القبض والتحصيل، مستحقات المدرسين، متابعة العقود والتقارير المالية',
-      boards: ['السنتر الآن', 'المدفوعات وسندات القبض', 'مستحقات المدرسين', 'العقود', 'التقارير المالية'],
-      color: 'border-cyan-500 bg-cyan-50/70 dark:bg-cyan-950/40 text-cyan-900 dark:text-cyan-200'
+      color: 'border-cyan-500 bg-cyan-500/10 text-cyan-900 dark:text-cyan-300'
     }
+  };
+
+  const handleDepartmentChange = (dept: 'إدارة' | 'ريسبشن' | 'سيلز' | 'مدرسين' | 'حسابات') => {
+    setDepartment(dept);
+    setCustomPermissions(DEFAULT_DEPT_PERMISSIONS[dept]);
+  };
+
+  const togglePermission = (sectionId: AppSection) => {
+    setCustomPermissions(prev => {
+      if (prev.includes(sectionId)) {
+        return prev.filter(p => p !== sectionId);
+      } else {
+        return [...prev, sectionId];
+      }
+    });
+  };
+
+  const handleSelectAllPermissions = () => {
+    setCustomPermissions(ALL_SYSTEM_SECTIONS.map(s => s.id));
+  };
+
+  const handleDeselectAllPermissions = () => {
+    setCustomPermissions(['dashboard', 'notifications']);
+  };
+
+  const handleResetDeptPermissions = () => {
+    setCustomPermissions(DEFAULT_DEPT_PERMISSIONS[department]);
   };
 
   const validate = () => {
@@ -164,12 +236,13 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         role: userToEdit.role === UserRole.SUPER_ADMIN ? UserRole.SUPER_ADMIN : selectedMeta.role,
         departmentDescription: selectedMeta.desc,
         teacherId: department === 'مدرسين' ? teacherId || undefined : undefined,
-        isActive
+        isActive,
+        customPermissions
       });
       addToast({
         type: 'success',
-        title: 'تم تحديث بيانات الموظف ✓',
-        message: `تم حفظ بيانات ${name.trim()} بنجاح`
+        title: 'تم حفظ وتحديث صلاحيات الموظف ✓',
+        message: `تم تحديث بيانات وصلاحيات ${name.trim()} (${customPermissions.length} قسم مصرح)`
       });
     } else {
       addUser({
@@ -187,12 +260,13 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         role: selectedMeta.role,
         departmentDescription: selectedMeta.desc,
         teacherId: department === 'مدرسين' ? teacherId || undefined : undefined,
-        isActive
+        isActive,
+        customPermissions
       });
       addToast({
         type: 'success',
-        title: 'تمت إضافة الموظف الجديد بنجاح ✓',
-        message: `تم إنشاء حساب (${username.trim()}) في قسم (${department})`
+        title: 'تم إنشاء حساب الموظف بنجاح ✓',
+        message: `تم إضافة (${username.trim()}) في قسم (${department}) مع ${customPermissions.length} صلاحية مخصصة`
       });
     }
 
@@ -201,91 +275,149 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden text-right animate-in fade-in zoom-in-95 duration-200 my-8">
-        {/* Header */}
-        <div className="px-6 py-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+      <div className="bg-[#FBF9F4] dark:bg-slate-900 w-full max-w-3xl rounded-3xl shadow-2xl border border-amber-500/20 dark:border-amber-500/20 overflow-hidden text-right animate-in fade-in zoom-in-95 duration-200 my-8">
+        {/* Header with Warm Gold Accents */}
+        <div className="px-6 py-5 bg-gradient-to-r from-slate-900 via-[#1E2538] to-slate-900 text-white flex items-center justify-between border-b border-amber-500/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
-              <UserIcon className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300">
+              <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-base">
-                {userToEdit ? 'تعديل بيانات وصلاحيات وراتب الموظف' : 'إضافة موظف ومستخدم جديد بالنظام'}
+              <h3 className="font-black text-base text-amber-100 flex items-center gap-2">
+                {userToEdit ? 'تعديل بيانات وتخصيص صلاحيات الموظف' : 'إنشاء موظف جديد وتحديد صلاحياته بدقة'}
               </h3>
-              <p className="text-xs text-indigo-200">
-                تسجيل اسم المستخدم وكلمة المرور والقسم والراتب والمستحقات
+              <p className="text-xs text-slate-300">
+                إمكانية إضافة أو سحب أي صلاحية لأي قسم في النظام حسب رغبة الإدارة
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
-          {/* Department / Specialty Selector */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[82vh] overflow-y-auto">
+          {/* Department / Specialty Preset */}
           <div className="space-y-2.5">
             <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-              <Briefcase className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>القسم / التخصص الوظيفي:</span>
+              <Briefcase className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>القسم الافتراضي / التخصص الوظيفي:</span>
               <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {(['إدارة', 'ريسبشن', 'سيلز', 'مدرسين', 'حسابات'] as const).map(dept => {
                 const isSelected = department === dept;
                 return (
                   <button
                     key={dept}
                     type="button"
-                    onClick={() => setDepartment(dept)}
-                    className={`p-3 rounded-2xl border text-right transition-all flex flex-col justify-between ${
+                    onClick={() => handleDepartmentChange(dept)}
+                    className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
                       isSelected
-                        ? 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 ring-2 ring-indigo-500/30 font-black text-indigo-950 dark:text-indigo-200 shadow-xs'
-                        : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 font-semibold'
+                        ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 ring-2 ring-amber-500/40 font-black text-amber-900 dark:text-amber-300 shadow-xs'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold'
                     }`}
                   >
-                    <div className="flex items-center justify-between w-full mb-1">
-                      <span className="text-xs">{dept}</span>
-                      {isSelected && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
-                    </div>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                      {dept === 'إدارة' ? 'كامل الأقسام' : dept === 'ريسبشن' ? 'شؤون الطلاب والحضور' : dept === 'سيلز' ? 'العقود والمدفوعات' : dept === 'مدرسين' ? 'حصصه والتحضير' : 'الماليات والتقارير'}
-                    </span>
+                    <div className="text-xs font-bold">{dept}</div>
                   </button>
                 );
               })}
             </div>
+          </div>
 
-            {/* Department Access Preview */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-700 dark:text-slate-300">اللوحات المصرح بالدخول إليها:</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300">
-                  {department}
+          {/* Granular Permissions Customizer (الميزة المطلوبة: تخصيص صلاحيات كل موظف بالحذف والإضافة) */}
+          <div className="p-4.5 rounded-2xl bg-white dark:bg-slate-800/90 border border-amber-500/20 shadow-xs space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                  تخصيص صلاحيات الموظف (إضافة / حذف صلاحيات الدخول والأقسام):
+                </h4>
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300/40">
+                  {customPermissions.length} من {ALL_SYSTEM_SECTIONS.length} صلاحية مفعلة
                 </span>
               </div>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {departmentMeta[department].boards.map((b, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-800 dark:text-slate-200 shadow-2xs"
-                  >
-                    ✓ {b}
-                  </span>
-                ))}
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSelectAllPermissions}
+                  className="px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg transition-colors cursor-pointer"
+                >
+                  منح الكل
+                </button>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <button
+                  type="button"
+                  onClick={handleDeselectAllPermissions}
+                  className="px-2.5 py-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
+                >
+                  إلغاء الكل
+                </button>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <button
+                  type="button"
+                  onClick={handleResetDeptPermissions}
+                  className="px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg transition-colors cursor-pointer"
+                >
+                  استعادة افتراضي القسم
+                </button>
               </div>
+            </div>
+
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              يمكنك النقر على أي صلاحية لتفعيلها للموظف أو إزالتها فوراً لمنعه من الاطلاع أو التعديل عليها:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
+              {ALL_SYSTEM_SECTIONS.map(sec => {
+                const isGranted = customPermissions.includes(sec.id);
+                return (
+                  <button
+                    key={sec.id}
+                    type="button"
+                    onClick={() => togglePermission(sec.id)}
+                    className={`p-2.5 rounded-xl border text-right transition-all flex items-start gap-2.5 cursor-pointer ${
+                      isGranted
+                        ? 'border-emerald-500/70 bg-emerald-50/70 dark:bg-emerald-950/30 text-slate-900 dark:text-white'
+                        : 'border-slate-200 dark:border-slate-700/80 bg-slate-50/40 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="mt-0.5">
+                      {isGranted ? (
+                        <CheckSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      ) : (
+                        <Square className="w-4 h-4 text-slate-400 dark:text-slate-600 shrink-0" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={`text-xs font-bold truncate ${isGranted ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-500'}`}>
+                          {sec.label}
+                        </span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-slate-200/60 dark:bg-slate-700 text-slate-600 dark:text-slate-400 shrink-0">
+                          {sec.category}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {sec.description}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* User Credentials (Username & Password) */}
-          <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/60 space-y-4">
-            <h4 className="text-xs font-black text-indigo-950 dark:text-indigo-300 flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>بيانات الدخول للنظام (اسم المستخدم وكلمة المرور)</span>
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-amber-500/20 space-y-4">
+            <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>بيانات تسجيل الدخول (Username & Password)</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -299,7 +431,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                   value={username}
                   onChange={e => setUsername(e.target.value.replace(/\s+/g, '').toLowerCase())}
                   placeholder="مثال: ahmed_reception أو mona"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none"
                 />
                 {errors.username && (
                   <p className="text-[11px] text-rose-500 font-semibold">{errors.username}</p>
@@ -317,12 +449,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="كلمة المرور"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -346,7 +478,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="الاسم ثلاثي أو رباعي"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none"
               />
               {errors.name && (
                 <p className="text-[11px] text-rose-500 font-semibold">{errors.name}</p>
@@ -363,7 +495,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 placeholder="01012345678"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none"
               />
               {errors.phone && (
                 <p className="text-[11px] text-rose-500 font-semibold">{errors.phone}</p>
@@ -380,7 +512,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={nationalId}
                 onChange={e => setNationalId(e.target.value)}
                 placeholder="14 رقم"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none"
               />
             </div>
 
@@ -394,14 +526,14 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="name@theway.com"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-mono text-left text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none"
               />
             </div>
           </div>
 
           {/* Salary & Financial Compensation Section */}
-          <div className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/50 space-y-4">
-            <h4 className="text-xs font-black text-emerald-950 dark:text-emerald-300 flex items-center gap-1.5">
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-emerald-500/20 space-y-4">
+            <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>الراتب والبدلات المالية</span>
             </h4>
@@ -458,7 +590,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               <select
                 value={teacherId}
                 onChange={e => setTeacherId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 outline-none"
               >
                 <option value="">-- بدون ربط أو إنشاء جديد --</option>
                 {teachers.map(t => (
@@ -483,16 +615,16 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           </div>
 
           {/* Active Status Checkbox */}
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700">
             <input
               type="checkbox"
               id="user-active-status"
               checked={isActive}
               onChange={e => setIsActive(e.target.checked)}
-              className="w-4 h-4 text-indigo-600 rounded-md focus:ring-indigo-500 cursor-pointer"
+              className="w-4 h-4 text-amber-600 rounded-md focus:ring-amber-500 cursor-pointer"
             />
             <label htmlFor="user-active-status" className="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
-              حساب مفعل (يسمح للموظف بتسجيل الدخول إلى لوحة قسمه في The Way Center)
+              حساب مفعل (يسمح للموظف بتسجيل الدخول إلى لوحة The Way بالصلاحيات المحددة أعلاه)
             </label>
           </div>
 
@@ -501,15 +633,15 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              className="px-5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               إلغاء
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+              className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white text-xs font-black shadow-lg shadow-amber-600/30 transition-all cursor-pointer"
             >
-              {userToEdit ? 'حفظ التعديلات' : 'إنشاء حساب الموظف'}
+              {userToEdit ? 'حفظ التعديلات والصلاحيات' : 'إنشاء حساب الموظف بالصلاحيات'}
             </button>
           </div>
         </form>
