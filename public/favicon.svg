@@ -1,20 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <linearGradient id="fav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1E3A8A" />
-      <stop offset="50%" stop-color="#1D4ED8" />
-      <stop offset="100%" stop-color="#2563EB" />
+    <radialGradient id="favBg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#EDF4FB" />
+    </radialGradient>
+    <linearGradient id="favWLeft" x1="0%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#00A2F8" />
+      <stop offset="100%" stop-color="#004D99" />
+    </linearGradient>
+    <linearGradient id="favWMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0070CE" />
+      <stop offset="100%" stop-color="#012C63" />
+    </linearGradient>
+    <radialGradient id="favTheSphere" cx="35%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#00B0FF" />
+      <stop offset="60%" stop-color="#0050A0" />
+      <stop offset="100%" stop-color="#012454" />
+    </radialGradient>
+    <linearGradient id="favSwoosh" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0077D6" />
+      <stop offset="100%" stop-color="#149DF6" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="24" fill="#0F172A" />
-  <!-- W shape -->
-  <path d="M22 35 H35 L44 75 H33 Z" fill="url(#fav-grad)" />
-  <path d="M46 35 H58 L65 65 L56 75 Z" fill="url(#fav-grad)" />
-  <path d="M57 35 H71 L84 75 H72 Z" fill="url(#fav-grad)" />
-  <!-- Circle 'THE' -->
-  <circle cx="16" cy="52" r="10" fill="url(#fav-grad)" />
-  <text x="16" y="55" font-family="'Segoe UI', sans-serif" font-size="6" font-weight="900" fill="#FFFFFF" text-anchor="middle">THE</text>
-  <!-- Swoosh Arc & Arrow -->
-  <path d="M6 55 C 15 75, 45 72, 88 20" stroke="url(#fav-grad)" stroke-width="4" stroke-linecap="round" />
-  <polygon points="94,14 83,21 89,27" fill="#2563EB" />
+
+  <!-- Clean rounded icon container -->
+  <rect width="128" height="128" rx="28" fill="url(#favBg)" />
+
+  <g transform="translate(6, 10) scale(0.18)">
+    <!-- Main W -->
+    <polygon points="175,170 258,170 318,440 242,440" fill="url(#favWLeft)" />
+    <polygon points="325,170 405,170 445,345 390,440 338,440" fill="url(#favWMain)" />
+    <polygon points="405,170 560,170 485,440 400,440" fill="url(#favWMain)" />
+
+    <!-- THE Sphere -->
+    <circle cx="140" cy="275" r="48" fill="url(#favTheSphere)" />
+    <text x="140" y="286" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF" text-anchor="middle">THE</text>
+
+    <!-- Swoosh Arc -->
+    <path d="M 80,295 C 85,365 185,395 305,330 C 400,278 495,175 605,80 L 595,70 C 480,170 385,270 295,320 C 185,375 98,350 92,295 Z" fill="url(#favSwoosh)" />
+
+    <!-- Arrowhead -->
+    <polygon points="655,30 575,70 605,115" fill="#26B4FF" />
+    <polygon points="655,30 605,115 595,85" fill="#0058A8" />
+  </g>
 </svg>
