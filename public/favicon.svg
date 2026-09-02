@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="favBg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#EDF4FB" />
+    </radialGradient>
+    <linearGradient id="favWLeft" x1="0%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#00A2F8" />
+      <stop offset="100%" stop-color="#004D99" />
+    </linearGradient>
+    <linearGradient id="favWMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0070CE" />
+      <stop offset="100%" stop-color="#012C63" />
+    </linearGradient>
+    <radialGradient id="favTheSphere" cx="35%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#00B0FF" />
+      <stop offset="60%" stop-color="#0050A0" />
+      <stop offset="100%" stop-color="#012454" />
+    </radialGradient>
+    <linearGradient id="favSwoosh" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0077D6" />
+      <stop offset="100%" stop-color="#149DF6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Clean rounded icon container -->
+  <rect width="128" height="128" rx="28" fill="url(#favBg)" />
+
+  <g transform="translate(6, 10) scale(0.18)">
+    <!-- Main W -->
+    <polygon points="175,170 258,170 318,440 242,440" fill="url(#favWLeft)" />
+    <polygon points="325,170 405,170 445,345 390,440 338,440" fill="url(#favWMain)" />
+    <polygon points="405,170 560,170 485,440 400,440" fill="url(#favWMain)" />
+
+    <!-- THE Sphere -->
+    <circle cx="140" cy="275" r="48" fill="url(#favTheSphere)" />
+    <text x="140" y="286" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF" text-anchor="middle">THE</text>
+
+    <!-- Swoosh Arc -->
+    <path d="M 80,295 C 85,365 185,395 305,330 C 400,278 495,175 605,80 L 595,70 C 480,170 385,270 295,320 C 185,375 98,350 92,295 Z" fill="url(#favSwoosh)" />
+
+    <!-- Arrowhead -->
+    <polygon points="655,30 575,70 605,115" fill="#26B4FF" />
+    <polygon points="655,30 605,115 595,85" fill="#0058A8" />
+  </g>
+</svg>

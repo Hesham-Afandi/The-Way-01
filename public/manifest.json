@@ -1,0 +1,27 @@
+{
+  "name": "The Way Center",
+  "short_name": "The Way",
+  "description": "The Way Training Center - منظومة إدارة المراكز التعليمية والأكاديمية",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0B1120",
+  "theme_color": "#2563EB",
+  "orientation": "any",
+  "categories": ["education", "productivity", "management"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
