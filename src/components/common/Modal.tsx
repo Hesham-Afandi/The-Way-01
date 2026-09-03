@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
@@ -18,9 +18,17 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   maxWidth = '2xl'
 }) => {
+  const handleClose = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  };
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        handleClose();
+      }
     };
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -52,7 +60,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-950/60 transition-opacity"
-        onClick={onClose}
+        onClick={handleClose}
         aria-hidden="true"
       />
 
@@ -70,7 +78,7 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="rounded-xl p-2 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
             >
               <X className="h-5 w-5" />

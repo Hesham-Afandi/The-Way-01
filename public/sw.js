@@ -1,38 +1,64 @@
-const CACHE_NAME = "the-way-v1";
+const CACHE_NAME = "the-way-v2";
+const STATIC_ASSETS = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/favicon.svg",
+  "/logo.svg"
+];
 
 self.addEventListener("install", (event) => {
-console.log("The Way Service Worker installing...");
-
-// Activate the new service worker immediately
-self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS).catch(() => {});
+    })
+  );
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-console.log("The Way Service Worker activated.");
-
-event.waitUntil(
-caches
-.keys()
-.then((cacheNames) => {
-return Promise.all(
-cacheNames
-.filter((cacheName) => cacheName !== CACHE_NAME)
-.map((cacheName) => caches.delete(cacheName))
-);
-})
-.then(() => self.clients.claim())
-);
+  event.waitUntil(
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => caches.delete(name))
+        );
+      })
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener("fetch", (event) => {
-// Only handle GET requests
-if (event.request.method !== "GET") {
-return;
-}
+  if (event.request.method !== "GET") {
+    return;
+  }
 
-event.respondWith(
-fetch(event.request).catch(() => {
-return caches.match(event.request);
-})
-);
+  // Stale-while-revalidate or Network-first strategy
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Clone response to cache valid GET responses
+        if (response && response.status === 200 && response.type === "basic") {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          if (event.request.mode === "navigate") {
+            return caches.match("/index.html") || caches.match("/");
+          }
+        });
+      })
+  );
 });
+

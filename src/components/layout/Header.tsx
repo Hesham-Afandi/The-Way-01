@@ -25,6 +25,7 @@ import { formatArabicDate } from '../../utils/formatters';
 import { UserRole } from '../../types';
 import { TheWayLogo } from '../common/TheWayLogo';
 import { InstallAppButton } from '../common/InstallAppPrompt';
+import { ConfirmModal } from '../common/ConfirmModal';
 
 interface HeaderProps {
   onOpenSearch: () => void;
@@ -62,6 +63,12 @@ export const Header: React.FC<HeaderProps> = ({
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const isAdmin =
+    currentUser.role === UserRole.SUPER_ADMIN ||
+    currentUser.role === UserRole.ADMIN ||
+    currentUser.department === 'الإدارة';
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -208,107 +215,110 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Notifications Dropdown Toggle */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setShowNotifications(!showNotifications);
-                setShowUserMenu(false);
-              }}
-              className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              aria-label="الإشعارات"
-            >
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 animate-pulse">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
+          {/* Notifications Dropdown Toggle (Admin Only) */}
+          {isAdmin && (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setShowUserMenu(false);
+                }}
+                className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="الإشعارات والتنبيهات (الإدارة)"
+                title="الإشعارات والتنبيهات (الإدارة)"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
 
-            {/* Notifications Popover */}
-            {showNotifications && (
-              <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-right">
-                <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs text-slate-800 dark:text-white">التنبيهات والإشعارات</span>
+              {/* Notifications Popover */}
+              {showNotifications && (
+                <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-right">
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-slate-800 dark:text-white">التنبيهات والإشعارات (الإدارة)</span>
+                      {unreadCount > 0 && (
+                        <span className="px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 rounded-full text-[10px] font-bold">
+                          {unreadCount} غير مقروء
+                        </span>
+                      )}
+                    </div>
                     {unreadCount > 0 && (
-                      <span className="px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 rounded-full text-[10px] font-bold">
-                        {unreadCount} غير مقروء
-                      </span>
+                      <button
+                        onClick={() => markAllNotificationsAsRead()}
+                        className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-bold cursor-pointer"
+                      >
+                        تحديد الكل كمقروء
+                      </button>
                     )}
                   </div>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={() => markAllNotificationsAsRead()}
-                      className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-bold cursor-pointer"
-                    >
-                      تحديد الكل كمقروء
-                    </button>
-                  )}
-                </div>
 
-                <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
-                  {notifications.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400 text-xs font-semibold">
-                      لا توجد إشعارات جديدة حالياً
-                    </div>
-                  ) : (
-                    notifications.map(notif => (
-                      <div
-                        key={notif.id}
-                        onClick={() => markNotificationAsRead(notif.id)}
-                        className={`p-3.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer flex gap-3 items-start ${
-                          !notif.isRead ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''
-                        }`}
-                      >
-                        <div className="mt-0.5">
-                          {notif.type === 'danger' && (
-                            <AlertTriangle className="w-4 h-4 text-rose-500" />
-                          )}
-                          {notif.type === 'warning' && (
-                            <Clock className="w-4 h-4 text-amber-500" />
-                          )}
-                          {notif.type === 'success' && (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          )}
-                          {notif.type === 'info' && (
-                            <Bell className="w-4 h-4 text-blue-500" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
-                            {notif.title}
-                          </p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
-                            {notif.message}
-                          </p>
-                          <span className="text-[10px] text-slate-400 font-mono mt-1 block">
-                            {new Date(notif.timestamp).toLocaleTimeString('ar-EG', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
+                  <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-slate-400 text-xs font-semibold">
+                        لا توجد إشعارات جديدة حالياً
                       </div>
-                    ))
-                  )}
-                </div>
+                    ) : (
+                      notifications.map(notif => (
+                        <div
+                          key={notif.id}
+                          onClick={() => markNotificationAsRead(notif.id)}
+                          className={`p-3.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer flex gap-3 items-start ${
+                            !notif.isRead ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''
+                          }`}
+                        >
+                          <div className="mt-0.5">
+                            {notif.type === 'danger' && (
+                              <AlertTriangle className="w-4 h-4 text-rose-500" />
+                            )}
+                            {notif.type === 'warning' && (
+                              <Clock className="w-4 h-4 text-amber-500" />
+                            )}
+                            {notif.type === 'success' && (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            )}
+                            {notif.type === 'info' && (
+                              <Bell className="w-4 h-4 text-blue-500" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                              {notif.title}
+                            </p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                              {notif.message}
+                            </p>
+                            <span className="text-[10px] text-slate-400 font-mono mt-1 block">
+                              {new Date(notif.timestamp).toLocaleTimeString('ar-EG', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
 
-                <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 text-center">
-                  <button
-                    onClick={() => {
-                      setActiveTab('notifications');
-                      setShowNotifications(false);
-                    }}
-                    className="text-xs text-amber-700 dark:text-amber-400 font-bold hover:underline"
-                  >
-                    عرض جميع الإشعارات والسجلات
-                  </button>
+                  <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 text-center">
+                    <button
+                      onClick={() => {
+                        setActiveTab('notifications');
+                        setShowNotifications(false);
+                      }}
+                      className="text-xs text-amber-700 dark:text-amber-400 font-bold hover:underline"
+                    >
+                      عرض جميع الإشعارات والسجلات
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* User Profile & Role Switcher Menu */}
           <div className="relative">
@@ -404,7 +414,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <button
                     onClick={() => {
                       setShowUserMenu(false);
-                      logout();
+                      setIsLogoutModalOpen(true);
                     }}
                     className="w-full text-right p-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 flex items-center gap-2 transition-colors cursor-pointer"
                   >
@@ -417,6 +427,22 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        title="تأكيد تسجيل الخروج"
+        message="هل أنت متأكد من رغبتك في تسجيل الخروج من منظومة The Way Center؟"
+        confirmLabel="نعم، تسجيل الخروج"
+        cancelLabel="إلغاء التراجع"
+        type="danger"
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          logout();
+        }}
+        onCancel={() => setIsLogoutModalOpen(false)}
+      />
     </header>
   );
 };

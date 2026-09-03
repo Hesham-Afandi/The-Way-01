@@ -97,7 +97,7 @@ export const LoginView: React.FC = () => {
           </div>
 
           <p className="text-xs sm:text-sm text-slate-600 max-w-lg font-medium leading-relaxed">
-            المنظومة السحابية الموحدة لإدارة شؤون الطلاب، المدرسين، الحصص، الحضور بالباركود، وسندات القبض
+            المنظومة السحابية الموحدة لإدارة شؤون الطلاب، المدرسين، الحصص، والحضور بالباركود
           </p>
         </div>
 

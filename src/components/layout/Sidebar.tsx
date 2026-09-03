@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Radio,
@@ -27,6 +27,7 @@ import { useApp } from '../../context/AppContext';
 import { AppSection } from '../../types';
 import { TheWayLogo } from '../common/TheWayLogo';
 import { InstallAppButton } from '../common/InstallAppPrompt';
+import { ConfirmModal } from '../common/ConfirmModal';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -45,6 +46,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     canEditSection,
     logout
   } = useApp();
+
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const liveCount = sessions.filter(s => s.status === 'live').length;
   const unreadNotifCount = notifications.filter(n => !n.isRead).length;
@@ -263,17 +266,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Footer Summary / Quick Info & Logout */}
         <div className="p-3.5 border-t border-slate-800/80 bg-[#0B1120] text-[11px] text-slate-400 flex items-center justify-between">
           <button
-            onClick={logout}
-            className="flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 font-bold p-1.5 rounded-xl hover:bg-rose-950/40 transition-colors cursor-pointer"
+            onClick={() => setIsLogoutModalOpen(true)}
+            className="flex items-center gap-2 text-xs text-rose-400 hover:text-rose-300 font-bold px-3 py-2 rounded-xl hover:bg-rose-950/40 transition-colors cursor-pointer w-full justify-center border border-rose-900/30"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>تسجيل خروج</span>
+            <LogOut className="w-4 h-4" />
+            <span>تسجيل الخروج</span>
           </button>
-          <span className="px-2 py-0.5 bg-slate-800/80 text-blue-300 rounded-md font-mono text-[10px] border border-slate-700/50">
-            The Way v2.0
-          </span>
         </div>
       </aside>
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        title="تأكيد تسجيل الخروج"
+        message="هل أنت متأكد من رغبتك في تسجيل الخروج من منظومة The Way Center؟ يمكنك تسجيل الدخول مجدداً في أي وقت."
+        confirmLabel="نعم، تسجيل الخروج"
+        cancelLabel="إلغاء التراجع"
+        type="danger"
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          logout();
+        }}
+        onCancel={() => setIsLogoutModalOpen(false)}
+      />
     </>
   );
 };

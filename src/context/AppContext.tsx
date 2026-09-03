@@ -179,6 +179,7 @@ interface AppContextType {
   // Navigation
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  goBack: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -232,7 +233,59 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Reset any sub-view selections to ensure immediate and smooth view rendering
     setSelectedStudentId(null);
     setSelectedTeacherId(null);
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.pushState({ tab, studentId: null, teacherId: null }, '', window.location.pathname);
+    }
   };
+
+  const handleSetSelectedStudentId = (id: string | null) => {
+    setSelectedStudentId(id);
+    if (id) setSelectedTeacherId(null);
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.pushState({ tab: activeTab, studentId: id, teacherId: null }, '', window.location.pathname);
+    }
+  };
+
+  const handleSetSelectedTeacherId = (id: string | null) => {
+    setSelectedTeacherId(id);
+    if (id) setSelectedStudentId(null);
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.pushState({ tab: activeTab, studentId: null, teacherId: id }, '', window.location.pathname);
+    }
+  };
+
+  const goBack = () => {
+    if (selectedStudentId) {
+      setSelectedStudentId(null);
+      return;
+    }
+    if (selectedTeacherId) {
+      setSelectedTeacherId(null);
+      return;
+    }
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+    } else {
+      setActiveTab('dashboard');
+    }
+  };
+
+  // Browser back / forward button listener (popstate)
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state) {
+        if (event.state.tab) setActiveTab(event.state.tab);
+        setSelectedStudentId(event.state.studentId || null);
+        setSelectedTeacherId(event.state.teacherId || null);
+      } else {
+        setSelectedStudentId(null);
+        setSelectedTeacherId(null);
+        setActiveTab('dashboard');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Subscribe to storage changes
   useEffect(() => {
@@ -359,14 +412,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Strict View permission check based on user role, custom permissions, and jurisdiction
   const canViewSection = (section: AppSection): boolean => {
     const role = currentUser.role;
-    // Admins (SUPER_ADMIN and ADMIN) have full access to all panels
-    if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
+    // Admins (SUPER_ADMIN and ADMIN) or Administration department have full access to all panels including notifications
+    if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN || currentUser.department === 'الإدارة') {
       return true;
+    }
+
+    // Notifications is strictly restricted to Administration
+    if (section === 'notifications') {
+      return false;
     }
 
     // Check custom granular permissions if assigned by Admin
     if (currentUser.customPermissions && Array.isArray(currentUser.customPermissions)) {
-      if (section === 'dashboard' || section === 'notifications') return true;
+      if (section === 'dashboard') return true;
       return currentUser.customPermissions.includes(section);
     }
 
@@ -374,22 +432,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     switch (role) {
       case UserRole.RECEPTION:
         // Reception handles front-desk, student registry, rooms, daily sessions, attendance, teachers
-        return ['dashboard', 'live', 'students', 'teachers', 'sessions', 'attendance', 'rooms', 'notifications'].includes(section);
+        return ['dashboard', 'live', 'students', 'teachers', 'sessions', 'attendance', 'rooms'].includes(section);
 
       case UserRole.SALES:
         // Sales handles onboarding, student packages, contracts, subject catalog
-        return ['dashboard', 'students', 'contracts', 'subjects', 'notifications'].includes(section);
+        return ['dashboard', 'students', 'contracts', 'subjects'].includes(section);
 
       case UserRole.ACCOUNTANT:
         // Accountant handles contracts, receipts, payments, teacher payroll, financial reports
-        return ['dashboard', 'contracts', 'payments', 'teacher_payments', 'reports', 'notifications'].includes(section);
+        return ['dashboard', 'contracts', 'payments', 'teacher_payments', 'reports'].includes(section);
 
       case UserRole.TEACHER:
         // Teacher handles classroom sessions, assignments, student attendance
-        return ['dashboard', 'live', 'attendance', 'assignments', 'sessions', 'notifications'].includes(section);
+        return ['dashboard', 'live', 'attendance', 'assignments', 'sessions'].includes(section);
 
       default:
-        return ['dashboard', 'notifications'].includes(section);
+        return ['dashboard'].includes(section);
     }
   };
 
@@ -441,7 +499,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       rooms: { title: 'القاعات والمعامل', allowedDepts: ['الريسبشن', 'الإدارة'], description: 'تنظيم سعة وتجهيزات القاعات' },
       subjects: { title: 'المواد الدراسية والمناهج', allowedDepts: ['الإدارة'], description: 'تعريف المواد والمراحل' },
       reports: { title: 'التقارير والإحصائيات', allowedDepts: ['الحسابات', 'الإدارة'], description: 'التحليلات والمؤشرات المالية' },
-      notifications: { title: 'الإشعارات والتنبيهات', allowedDepts: ['الكل'], description: 'مركز التنبيهات' },
+      notifications: { title: 'الإشعارات والتنبيهات', allowedDepts: ['الإدارة'], description: 'مركز التنبيهات الإدارية' },
       audit: { title: 'سجل العمليات والتدقيق', allowedDepts: ['الإدارة'], description: 'متابعة كافة حركات النظام' },
       users: { title: 'المستخدمين والصلاحيات', allowedDepts: ['الإدارة'], description: 'إدارة حسابات الموظفين' },
       settings: { title: 'إعدادات المركز', allowedDepts: ['الإدارة'], description: 'البيانات الأساسية للنظام' }
@@ -971,11 +1029,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         activeQRStudent,
         setActiveQRStudent,
         selectedStudentId,
-        setSelectedStudentId,
+        setSelectedStudentId: handleSetSelectedStudentId,
         selectedTeacherId,
-        setSelectedTeacherId,
+        setSelectedTeacherId: handleSetSelectedTeacherId,
         activeTab,
-        setActiveTab: handleSetActiveTab
+        setActiveTab: handleSetActiveTab,
+        goBack
       }}
     >
       {children}

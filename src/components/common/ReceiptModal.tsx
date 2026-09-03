@@ -3,15 +3,36 @@ import { Printer, MapPin, Phone, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatCurrency, formatArabicDate } from '../../utils/formatters';
 import { TheWayLogo } from './TheWayLogo';
+import { Payment } from '../../types';
 
-export const ReceiptModal: React.FC = () => {
+interface ReceiptModalProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  payment?: Payment | null;
+}
+
+export const ReceiptModal: React.FC<ReceiptModalProps> = ({
+  isOpen,
+  onClose,
+  payment
+}) => {
   const { activeReceiptPayment, setActiveReceiptPayment, students, contracts, subjects, settings, users } = useApp();
 
-  if (!activeReceiptPayment) return null;
+  const currentPayment = payment || activeReceiptPayment;
+  const isVisible = isOpen !== undefined ? isOpen : !!currentPayment;
 
-  const student = students.find(s => s.id === activeReceiptPayment.studentId);
-  const contract = contracts.find(c => c.id === activeReceiptPayment.contractId);
-  const collector = users.find(u => u.id === activeReceiptPayment.collectedByUserId);
+  if (!isVisible || !currentPayment) return null;
+
+  const handleClose = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+    setActiveReceiptPayment(null);
+  };
+
+  const student = students.find(s => s.id === currentPayment.studentId);
+  const contract = contracts.find(c => c.id === currentPayment.contractId);
+  const collector = users.find(u => u.id === currentPayment.collectedByUserId);
 
   const contractSubjects = contract
     ? subjects.filter(s => contract.subjectIds.includes(s.id)).map(s => s.name).join('، ')
@@ -46,7 +67,7 @@ export const ReceiptModal: React.FC = () => {
             </button>
           </div>
           <button
-            onClick={() => setActiveReceiptPayment(null)}
+            onClick={handleClose}
             className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -71,9 +92,9 @@ export const ReceiptModal: React.FC = () => {
             <div className="text-left">
               <div className="inline-block px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-[11px] font-bold text-blue-900">سند قبض مالي</p>
-                <p className="text-sm font-black text-blue-700 font-mono">{activeReceiptPayment.receiptNumber}</p>
+                <p className="text-sm font-black text-blue-700 font-mono">{currentPayment.receiptNumber}</p>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1.5">{formatArabicDate(activeReceiptPayment.date)}</p>
+              <p className="text-[11px] text-slate-400 mt-1.5">{formatArabicDate(currentPayment.date)}</p>
             </div>
           </div>
 
@@ -109,20 +130,20 @@ export const ReceiptModal: React.FC = () => {
             <div>
               <span className="text-xs font-semibold text-emerald-800 block">المبلغ المدفوع:</span>
               <span className="text-2xl font-black text-emerald-950">
-                {formatCurrency(activeReceiptPayment.amount, settings.currency)}
+                {formatCurrency(currentPayment.amount, settings.currency)}
               </span>
             </div>
             <div className="text-left text-xs text-emerald-900">
               <span className="block font-medium">طريقة السداد:</span>
-              <span className="font-bold">{paymentMethodLabels[activeReceiptPayment.paymentMethod] || 'نقداً'}</span>
+              <span className="font-bold">{paymentMethodLabels[currentPayment.paymentMethod] || 'نقداً'}</span>
             </div>
           </div>
 
           {/* Notes */}
-          {activeReceiptPayment.notes && (
+          {currentPayment.notes && (
             <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
               <span className="font-bold text-slate-700">ملاحظات / البيان: </span>
-              {activeReceiptPayment.notes}
+              {currentPayment.notes}
             </div>
           )}
 

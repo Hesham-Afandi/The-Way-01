@@ -344,10 +344,10 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
               />
             </div>
 
-            {/* 3. Sales Rep (السيلز اللي جاب الطالب) */}
+            {/* 3. Sales Rep (السيلز المسجل) */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                السيلز المسجل (مسؤول المبيعات اللي جاب الطالب):
+                السيلز المسجل:
               </label>
               <div className="flex gap-2">
                 <input

@@ -13,13 +13,16 @@ import {
   Search,
   ArrowRight,
   Sparkles,
-  Zap
+  Zap,
+  FileSpreadsheet,
+  Download
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { Badge } from '../../common/Badge';
 import { ViewOnlyBanner } from '../../common/ViewOnlyBanner';
 import { AttendanceStatus } from '../../../types';
 import { formatTime12h, formatArabicDate } from '../../../utils/formatters';
+import { downloadExcelHTML, downloadCSV } from '../../../utils/exportUtils';
 
 interface AttendanceViewProps {
   onOpenQRScanner?: () => void;
@@ -121,6 +124,71 @@ export const AttendanceView: React.FC<AttendanceViewProps> = () => {
     });
   };
 
+  const handleExportToExcel = () => {
+    if (!currentSession) {
+      addToast({
+        title: 'تنبيه',
+        message: 'يرجى اختيار حصة لتصدير كشف حضورها إلى Excel',
+        type: 'warning'
+      });
+      return;
+    }
+
+    const headers = [
+      'م',
+      'كود الطالب',
+      'اسم الطالب',
+      'الصف الدراسي',
+      'اسم ولي الأمر',
+      'هاتف ولي الأمر',
+      'هاتف الطالب',
+      'حالة الحضور',
+      'وقت تسجيل الدخول',
+      'ملاحظات الحضور',
+      'الحصة',
+      'المادة',
+      'المدرس',
+      'القاعة',
+      'التاريخ'
+    ];
+
+    const rows = sessionStudents.map((st, index) => {
+      const att = attendanceMap.get(st.id);
+      let statusLabel = 'لم يُسجل بعد';
+      if (att?.status === AttendanceStatus.PRESENT) statusLabel = 'حاضر ✓';
+      else if (att?.status === AttendanceStatus.ABSENT) statusLabel = 'غائب ✗';
+      else if (att?.status === AttendanceStatus.LATE) statusLabel = 'متأخر ⏱';
+      else if (att?.status === AttendanceStatus.EXCUSED) statusLabel = 'معتذر';
+
+      return [
+        index + 1,
+        st.code,
+        st.name,
+        st.grade || '-',
+        st.parent?.name || '-',
+        st.parent?.phone || '-',
+        st.phone || '-',
+        statusLabel,
+        att?.checkInTime || '-',
+        att?.notes || '-',
+        currentSession.title,
+        subjectsMap[currentSession.subjectId] || '-',
+        teachersMap[currentSession.teacherId] || '-',
+        roomsMap[currentSession.roomId] || '-',
+        currentSession.date
+      ];
+    });
+
+    const sheetName = `كشف_حضور_${currentSession.title.replace(/[\/\\]/g, '_')}_${currentSession.date}`;
+    downloadExcelHTML(sheetName, `كشف حضور وغياب - ${currentSession.title}`, headers, rows);
+
+    addToast({
+      title: 'تم تصدير كشف الحضور بنجاح ✓',
+      message: `تم إنشاء وتحميل ملف Excel يتضمن بيانات ${sessionStudents.length} طالب`,
+      type: 'success'
+    });
+  };
+
   return (
     <div className="space-y-6 text-right">
       {/* View Only Banner for restricted departments */}
@@ -138,27 +206,39 @@ export const AttendanceView: React.FC<AttendanceViewProps> = () => {
           </p>
         </div>
 
-        {/* Quick Student Code Input Widget */}
-        {isEditable && (
-          <form onSubmit={handleQuickCodeSubmit} className="flex items-center gap-2">
-            <div className="relative">
-              <Zap className="w-4 h-4 absolute top-3 right-3 text-amber-500" />
-              <input
-                type="text"
-                value={quickCodeInput}
-                onChange={e => setQuickCodeInput(e.target.value)}
-                placeholder="أدخل كود الطالب (مثال: STD-001)..."
-                className="pr-9 pl-3 py-2 text-xs font-mono font-bold rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white focus:bg-white focus:ring-2 focus:ring-indigo-500 w-56 sm:w-64"
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
-            >
-              تسجيل
-            </button>
-          </form>
-        )}
+        {/* Quick Student Code Input Widget & Excel Export */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportToExcel}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-2xl shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+            title="تصدير كشف حضور الحصة الحالية إلى ملف Excel (.xls)"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>تصدير إلى Excel</span>
+          </button>
+
+          {isEditable && (
+            <form onSubmit={handleQuickCodeSubmit} className="flex items-center gap-2">
+              <div className="relative">
+                <Zap className="w-4 h-4 absolute top-3 right-3 text-amber-500" />
+                <input
+                  type="text"
+                  value={quickCodeInput}
+                  onChange={e => setQuickCodeInput(e.target.value)}
+                  placeholder="أدخل كود الطالب (مثال: STD-001)..."
+                  className="pr-9 pl-3 py-2 text-xs font-mono font-bold rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white focus:bg-white focus:ring-2 focus:ring-indigo-500 w-52 sm:w-60"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+              >
+                تسجيل
+              </button>
+            </form>
+          )}
+        </div>
       </div>
 
       {/* Session Selection & Summary Card */}

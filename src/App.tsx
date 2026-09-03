@@ -14,6 +14,7 @@ import { LoginView } from './components/auth/LoginView';
 // Modals
 import { ReceiptModal } from './components/common/ReceiptModal';
 import { StudentIdCardModal } from './components/common/StudentIdCardModal';
+import { AppLoader } from './components/common/AppLoader';
 import { StudentFormModal } from './components/features/students/StudentFormModal';
 import { TeacherFormModal } from './components/features/teachers/TeacherFormModal';
 import { SessionFormModal } from './components/features/sessions/SessionFormModal';
@@ -84,6 +85,14 @@ const MainContent: React.FC = () => {
 
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editProfileTargetUser, setEditProfileTargetUser] = useState<any>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 550);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Global keyboard shortcut for Ctrl+K search
   useEffect(() => {
@@ -149,6 +158,10 @@ const MainContent: React.FC = () => {
     setEditProfileTargetUser(user || null);
     setIsEditProfileOpen(true);
   };
+
+  if (isInitialLoading) {
+    return <AppLoader message="The Way Training Center" subMessage="جاري تهيئة المنظومة ولوحة التحكم..." />;
+  }
 
   if (!isAuthenticated) {
     return (
