@@ -21,27 +21,33 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="The Way" />
 
-    <!-- Pre-capture beforeinstallprompt event globally for instant PWA installation -->
+    <!-- Inline script to capture PWA installation prompt immediately (4U Architecture) -->
     <script>
-      window.deferredInstallPrompt = null;
-      window.addEventListener('beforeinstallprompt', function (e) {
+      window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
-        window.deferredInstallPrompt = e;
+        window.deferredPrompt = e;
         window.dispatchEvent(new CustomEvent('theway:pwa-ready', { detail: e }));
-        
-        // Auto-trigger if opened with install intent (?install=true)
-        if (new URLSearchParams(window.location.search).get('install') === 'true') {
-          setTimeout(function () {
-            if (window.deferredInstallPrompt) {
-              window.deferredInstallPrompt.prompt().catch(function () {});
-            }
-          }, 350);
+        if (window.onBeforeInstallPrompt) {
+          window.onBeforeInstallPrompt(e);
         }
       });
-      window.addEventListener('appinstalled', function () {
-        window.deferredInstallPrompt = null;
+      window.addEventListener('appinstalled', () => {
+        window.deferredPrompt = null;
         window.dispatchEvent(new CustomEvent('theway:pwa-installed'));
       });
+      // Register Service Worker immediately for PWA compliance
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          const base = window.location.pathname.endsWith('/')
+            ? window.location.pathname
+            : window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+          navigator.serviceWorker.register(base + 'sw.js').then((reg) => {
+            console.log('The Way ServiceWorker registered:', reg.scope);
+          }).catch((err) => {
+            console.error('ServiceWorker registration failed:', err);
+          });
+        });
+      }
     </script>
 
     <!-- Typography -->
@@ -65,8 +71,8 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-Dr72JqN-.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-3vzldw3S.css">
+    <script type="module" crossorigin src="./assets/index-CBSpmCtR.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CwL0sYTF.css">
   </head>
 
   <body class="bg-slate-50 dark:bg-[#090D16] text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-600 selection:text-white min-h-screen transition-colors duration-200">
