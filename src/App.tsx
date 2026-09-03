@@ -10,6 +10,7 @@ import { Header } from './components/layout/Header';
 import { ToastContainer } from './components/layout/ToastContainer';
 import { GlobalSearchModal } from './components/layout/GlobalSearchModal';
 import { LoginView } from './components/auth/LoginView';
+import { InstallAppButton } from './components/common/InstallAppPrompt';
 
 // Modals
 import { ReceiptModal } from './components/common/ReceiptModal';
@@ -348,6 +349,9 @@ const MainContent: React.FC = () => {
         }}
         targetUser={editProfileTargetUser}
       />
+
+      {/* 4U Floating Install Action Button */}
+      <InstallAppButton variant="floating" />
 
       {/* Interactive Toast Notifications */}
       <ToastContainer />
